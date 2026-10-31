@@ -1,0 +1,17 @@
+*** Settings ***
+Documentation     Your SAP system. setup.ps1 copies this file to sap_system.resource, which git ignores.
+...               Any value can be overridden for one run with --variable NAME:value.
+
+*** Variables ***
+# System ID, client and the entry's name exactly as SAP Logon shows it
+${SAP_GUI_SYSTEM}         __SYSTEM__
+${SAP_GUI_CLIENT}         __CLIENT__
+${SAP_LOGON_ENTRY}        __LOGON_ENTRY__
+${SAP_GUI_LANGUAGE}       __LANGUAGE__
+# True for SAP GUI 64-bit (installed under Program Files), False for 32-bit
+${SAP_GUI_X64}            __X64__
+
+# Only used when you are not already logged on in SAP Logon. Leave these unset and log on by hand,
+# or set them as environment variables for unattended runs: passwords do not belong in files.
+${SAP_GUI_USERNAME}       %{SAP_GUI_USERNAME=}
+${SAP_GUI_PASSWORD}       %{SAP_GUI_PASSWORD=}

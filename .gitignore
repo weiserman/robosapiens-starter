@@ -1,0 +1,10 @@
+# Your system settings: never commit these
+resources/sap_system.resource
+
+.venv/
+__pycache__/
+results/
+log.html
+output.xml
+report.html
+*.png
