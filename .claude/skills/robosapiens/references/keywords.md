@@ -16,7 +16,7 @@ For RoboSAPiens 2.36.2. The full documentation is at https://imbus.github.io/rob
 
 | Keyword | Notes |
 |---|---|
-| `Execute Transaction    ME2N` | Add `with_command_field=True` to type it in the command field like a person |
+| `Execute Transaction    ME2N` | From inside a transaction use `/nME2N`: a bare code does nothing there, without an error. Add `with_command_field=True` to type it in the command field like a person |
 | `Press Key Combination    F8` | Also `Enter`, `F3` (back), `Ctrl+S` |
 | `Push Button    Save` | Matches part of a name or tooltip. Use `exact=True` to be strict |
 | `Select Menu Entry    System/User Profile/Own Data` | `/` between levels |

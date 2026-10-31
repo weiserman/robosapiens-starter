@@ -15,3 +15,9 @@
 | A step works by hand but the list is empty or short | A saved variant or remembered value is filtering the list | Clear the selection field in the test |
 | `Parsing '...\tests' failed` | `robot` was run from another folder | Use `.\run_tests.ps1`, which changes to the project folder itself |
 | `running scripts is disabled on this system` | PowerShell execution policy | `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, or ask IT |
+| A step acts on the previous transaction's screen | `Execute Transaction` with a bare code from inside a transaction does nothing, without an error | Use `/nME2N` |
+| `Refused: ... is not in resources/sap_mcp_transactions.txt` | The MCP server is read-only and the transaction is not listed | If it only displays data, the user adds it to the file. No restart needed |
+| `Refused: ... this server is read-only` | The step would save or post | The user decides: `${SAP_MCP_ALLOW_CHANGES}` in `resources/sap_system.resource`, then a restart of the server |
+| `SAP is still busy after 120 seconds` | A selection without restrictions, usually | Wait for the list to finish, then restrict the selection next time |
+| The `sap-gui` server does not connect | `.venv` or `resources/sap_system.resource` is missing | Run `.\setup.ps1`, and approve the server when Claude Code asks |
+| An extra SAP window stays open after a session | The server was stopped before it could close it | Close that window by hand |

@@ -30,7 +30,9 @@ Do not write locators from memory: labels differ per system, language and indust
 .\inspect.ps1 ME2N
 ```
 
-This prints the transaction's first screen. For later screens, add `Describe Screen` to a test after the step that reaches them and log the result, or use `Save Screenshot    LOG`.
+This prints the transaction's first screen. For later screens, use the `sap-gui` MCP server if its tools are available: `open_window`, `start_transaction`, then `describe_screen` after each step. It works in its own window, and `recorded_test` turns the steps into a test. Run that test before trusting it: it reads whole tables, where you may have read a few rows, so a step that follows a read can behave differently. Without the server, add `Describe Screen` to a test after the step that reaches the screen and log the result, or use `Save Screenshot    LOG`.
+
+The server is read-only unless the user sets `${SAP_MCP_ALLOW_CHANGES}` to True in `resources/sap_system.resource`. If it refuses a step, tell the user what was refused and why. Never change that setting or `resources/sap_mcp_transactions.txt` yourself, and restrict a selection before executing it: an empty ME2N ties up the window for minutes.
 
 If this project's SAP system is connected through an ADT or MCP tool, reading the transaction's report and selection texts helps too, but the live screen wins.
 
@@ -61,6 +63,7 @@ Each of these comes from a failure on a real system.
 
 - **Use `Open SAP Window`, never `Connect To Running SAP` on its own.** That keyword takes over the first session, which is the window the user is working in, and a transaction start there can lose their unsaved work.
 - **Never use `Close SAP` or `Disconnect From Server` on a logon the test did not make.** `Close SAP` kills `saplogon.exe` whatever started it, despite what its documentation says, and `Disconnect From Server` closes every window on the connection. `Close SAP GUI Session` closes only the test's window.
+- **Start a second transaction with `/n`.** From inside a transaction, `Execute Transaction    ME2N` does nothing and reports success, so the next steps act on the wrong screen. Use `Execute Transaction    /nME2N`.
 - **Press keys rather than `Push Button` for commands.** `Push Button` matches part of a name by default, so `Push Button    Execute` hit "Execute and Print" and opened a print dialog. Use `Press Key Combination    F8`, or `exact=True`.
 - **Default to read-only, and tag it.** Display transactions are safe to run freely. Before running anything that saves or posts, tell the user exactly what it changes and on which system, get their go-ahead, and tag the test (for example `posts-goods-movement`) so that it can be excluded.
 - **Clear what a saved variant may bring along.** Selection screens remember values: a default site silently filtered one list. Clear each restricting field with `Fill Text Field    <label>    ${EMPTY}`, and range ends with `Document Date >> to`.

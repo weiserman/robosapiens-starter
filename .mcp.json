@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "sap-gui": {
+      "command": ".venv/Scripts/python.exe",
+      "args": ["tools/sap_mcp_server.py"]
+    }
+  }
+}

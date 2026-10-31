@@ -3,3 +3,5 @@
 This project automates SAP GUI for Windows with Robot Framework and RoboSAPiens. Use the `robosapiens` skill in `.claude/skills/robosapiens` for any work on it.
 
 `resources/sap_system.resource` holds the user's system settings and is ignored by git: do not commit it. Treat a test as read-only unless the user has said it may save or post.
+
+The `sap-gui` MCP server drives a window of its own, one step at a time. Never change `${SAP_MCP_ALLOW_CHANGES}` or `resources/sap_mcp_transactions.txt` yourself: those are the user's decisions.

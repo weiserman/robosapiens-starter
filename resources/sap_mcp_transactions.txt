@@ -1,0 +1,33 @@
+# Transactions the MCP server (tools/sap_mcp_server.py) may start while it is read-only.
+# Add only transactions that display data, one per line. Saved changes need no restart.
+# Leave out transactions that also post, such as MIGO, and SE16N, which has an edit mode.
+
+SESSION_MANAGER  # SAP Easy Access
+SM04             # Users logged on
+
+# Purchasing
+ME2L
+ME2M
+ME2N
+ME23N
+ME53N
+
+# Inventory and materials
+MB51
+MB52
+MM03
+MMBE
+
+# Sales and delivery
+VA03
+VF03
+VL03N
+
+# Finance
+FB03
+FBL1N
+FBL3N
+FBL5N
+
+# Tables
+SE16

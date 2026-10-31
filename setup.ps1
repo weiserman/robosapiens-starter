@@ -77,3 +77,4 @@ if ($LASTEXITCODE) { throw 'The test files do not load: see the errors above' }
 
 Write-Host ''
 Write-Host 'Setup finished. Next: log on to the system in SAP Logon, then run .\run_tests.ps1 -Include smoke'
+Write-Host 'Claude Code will offer the read-only sap-gui MCP server when you open this folder.'

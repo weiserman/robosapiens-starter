@@ -10,6 +10,9 @@ ${SAP_LOGON_ENTRY}        __LOGON_ENTRY__
 ${SAP_GUI_LANGUAGE}       __LANGUAGE__
 # True for SAP GUI 64-bit (installed under Program Files), False for 32-bit
 ${SAP_GUI_X64}            __X64__
+# True lets the MCP server (tools/sap_mcp_server.py) save and post on this system.
+# Keep it False unless you want that, and never set it on a production system.
+${SAP_MCP_ALLOW_CHANGES}  False
 
 # Only used when you are not already logged on in SAP Logon. Leave these unset and log on by hand,
 # or set them as environment variables for unattended runs: passwords do not belong in files.

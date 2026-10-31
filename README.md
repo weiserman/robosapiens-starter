@@ -16,6 +16,7 @@ RoboSAPiens provides those keywords. This starter adds what you need around them
 - **`Get Table Rows`** reads a whole list into dictionaries.
 - **One-command setup**, dated result folders and working examples.
 - **A Claude Code skill** that lets Claude write tests the same way, including the mistakes to avoid.
+- **A read-only MCP server** that lets Claude work through SAP screens live, then turn the steps into a test.
 
 ## What you need
 
@@ -159,6 +160,37 @@ git clone https://github.com/weiserman/robosapiens-starter.git
 
 Then you can start a project by saying "set up RoboSAPiens for this project" and Claude will take it from there. The skill tells Claude to ask you to log on yourself rather than handle your SAP password.
 
+## Let Claude work through SAP live
+
+`.\inspect.ps1` only shows a transaction's first screen. The `sap-gui` MCP server lets Claude go further, one step at a time: fill a selection, execute it, look at the list, open a row, and turn the steps into a test.
+
+It is in `.mcp.json`, so Claude Code offers it when you open a project: approve it, log on in SAP Logon, and ask:
+
+> Look at what ME2N shows for PO 4500000001 and write a test that reads the open quantities
+
+| Tool | What it does |
+|---|---|
+| `open_window`, `close_window` | Opens and closes a window of its own, on the system in `sap_system.resource` |
+| `describe_screen`, `screenshot` | Shows Claude the labels, fields, buttons, tabs and columns, or a picture |
+| `start_transaction`, `press_key`, `push_button`, `select_tab`, `select_menu_entry` | Moves around |
+| `fill_field`, `tick_checkbox`, `untick_checkbox`, `select_radio_button`, `select_dropdown_entry` | Fills in a screen |
+| `read_field`, `read_table`, `double_click_cell` | Reads, and opens a row |
+| `recorded_test` | Returns the steps so far as a Robot Framework test |
+
+Run a recorded test before you rely on it. It reads whole tables where Claude may have read a few rows, so a step after a read can behave differently.
+
+**It is read-only unless you change that:**
+
+- It only starts the transactions in `resources\sap_mcp_transactions.txt`. Add display transactions there, one per line. It takes effect without a restart.
+- It refuses `Ctrl+S` and `F11`, and buttons and menu entries with names such as Save, Post or Delete.
+- It never logs on, has no tool that takes a password, and cannot touch your own windows.
+
+This guards against mistakes, but it is not a security boundary: a display transaction can still lead somewhere unexpected, and a button can be named in a way the list misses. For a guarantee, log on with a user that has display authorizations only.
+
+To let Claude save and post on a test system, set `${SAP_MCP_ALLOW_CHANGES}` to `True` in `resources\sap_system.resource` and restart the server. All transactions then start, the refusals stop, and a `fill_cell` tool appears. Never do this on a production system.
+
+The server closes its window when it stops. If it is stopped abruptly, close the leftover window by hand.
+
 ## Running without a logged-on user
 
 For unattended runs, set `SAP_GUI_USERNAME` and `SAP_GUI_PASSWORD` as environment variables, for example from your CI system's secret store. The test starts SAP Logon if needed, logs on through `${SAP_LOGON_ENTRY}`, and logs off at the end. Don't put passwords in files.
@@ -175,6 +207,9 @@ Settings can be changed for one run: `.venv\Scripts\robot.exe --variable SAP_GUI
 | `tests\` | Your tests; `00_connection.robot` is the smoke test | Yes |
 | `tests\examples\` | A worked example to copy | Copy it |
 | `tools\inspect_screen.robot` | Used by `inspect.ps1` | No |
+| `resources\sap_mcp_transactions.txt` | Transactions the MCP server may start while read-only | Add display transactions |
+| `tools\sap_mcp_server.py`, `.mcp.json` | The MCP server, and how Claude Code starts it | Rarely |
+| `tools\test_sap_mcp_server.py` | Its tests, which need no SAP GUI | If you change the server |
 | `.claude\skills\robosapiens\` | The Claude Code skill | If your conventions differ |
 | `run_tests.ps1`, `inspect.ps1`, `setup.ps1` | Run, look, set up | Rarely |
 | `add-to-project.ps1`, `install-skill.ps1` | Add to an existing project, install the skill | No |
@@ -189,11 +224,11 @@ See [the troubleshooting table](.claude/skills/robosapiens/references/troublesho
 
 ## Upgrading RoboSAPiens
 
-The version is pinned in `requirements.txt`. RoboSAPiens has no release notes, so change the version on purpose, run `.\setup.ps1`, and run your tests.
+The version is pinned in `requirements.txt`. RoboSAPiens has no release notes, so change the version on purpose, run `.\setup.ps1`, and run your tests. The MCP server calls RoboSAPiens directly, so run its tests too: `cd tools`, then `..\.venv\Scripts\python.exe -m unittest test_sap_mcp_server`.
 
 ## Tested on
 
-SAP GUI 8.00 64-bit, S/4HANA, Python 3.13, Robot Framework 7.5, RoboSAPiens 2.36.2, logon language EN. Other versions should work but have not been tried: 32-bit SAP GUI in particular. Issues and pull requests are welcome.
+SAP GUI 8.00 64-bit, S/4HANA, Python 3.13, Robot Framework 7.5, RoboSAPiens 2.36.2, MCP SDK 2.3.0, logon language EN. Other versions should work but have not been tried: 32-bit SAP GUI in particular. Issues and pull requests are welcome.
 
 ## License and credits
 

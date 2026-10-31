@@ -14,17 +14,18 @@ Set-Location $PSScriptRoot
 if (-not (Test-Path $Path -PathType Container)) { throw "Folder not found: $Path" }
 
 $files = @(
-    'setup.ps1', 'run_tests.ps1', 'inspect.ps1',
+    'setup.ps1', 'run_tests.ps1', 'inspect.ps1', '.mcp.json',
     'libraries\SapGui.py',
-    'resources\sap_gui.resource', 'resources\sap_system.resource.example',
+    'resources\sap_gui.resource', 'resources\sap_system.resource.example', 'resources\sap_mcp_transactions.txt',
     'tests\00_connection.robot', 'tests\examples\01_read_a_table.robot',
-    'tools\inspect_screen.robot'
+    'tools\inspect_screen.robot', 'tools\sap_mcp_server.py', 'tools\test_sap_mcp_server.py'
 )
 $skill = Get-ChildItem '.claude\skills\robosapiens' -Recurse -File | ForEach-Object { Resolve-Path $_.FullName -Relative }
 foreach ($file in @($files) + @($skill)) {
     $target = Join-Path $Path $file
     if (Test-Path $target) {
         Write-Host "   Skipped, already there: $file"
+        if ($file -eq '.mcp.json') { Write-Host '   Copy the sap-gui entry from the starter''s .mcp.json into yours by hand' }
         continue
     }
     New-Item -ItemType Directory -Force (Split-Path $target) | Out-Null

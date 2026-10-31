@@ -1,3 +1,4 @@
 robotframework==7.5
 robotframework-robosapiens==2.36.2
 pywin32==311
+mcp==2.3.0
