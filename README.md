@@ -16,7 +16,7 @@ RoboSAPiens provides those keywords. This starter adds what you need around them
 - **`Get Table Rows`** reads a whole list into dictionaries.
 - **One-command setup**, dated result folders and working examples.
 - **A Claude Code skill** that lets Claude write tests the same way, including the mistakes to avoid.
-- **A read-only MCP server** that lets Claude work through SAP screens live, then turn the steps into a test.
+- **A read-only [MCP server](#mcp-server-let-claude-work-through-sap-live)** that lets Claude work through SAP screens live, then turn the steps into a test.
 
 ## What you need
 
@@ -60,6 +60,8 @@ This creates `.venv`, installs the pinned packages, detects whether your SAP GUI
 
 You will see an extra SAP window open and close, while your own window stays as it was. The result is in `results\<date>\report.html`.
 
+**5. If you use Claude Code,** open it in this folder and approve the `sap-gui` server. See [the MCP server](#mcp-server-let-claude-work-through-sap-live).
+
 ## Add it to an existing project
 
 ```powershell
@@ -69,7 +71,7 @@ cd C:\Projects\my-sap-project
 .\setup.ps1 -System S4D -Client 100 -LogonEntry "S/4HANA Development"
 ```
 
-Existing files are left alone. `requirements.txt` and `.gitignore` get the lines they are missing.
+Existing files are left alone. `requirements.txt` and `.gitignore` get the lines they are missing. This also adds the [MCP server](#add-it-to-a-project-you-already-have).
 
 ## Write your first test
 
@@ -160,13 +162,69 @@ git clone https://github.com/weiserman/robosapiens-starter.git
 
 Then you can start a project by saying "set up RoboSAPiens for this project" and Claude will take it from there. The skill tells Claude to ask you to log on yourself rather than handle your SAP password.
 
-## Let Claude work through SAP live
+## MCP server: let Claude work through SAP live
 
 `.\inspect.ps1` only shows a transaction's first screen. The `sap-gui` MCP server lets Claude go further, one step at a time: fill a selection, execute it, look at the list, open a row, and turn the steps into a test.
 
-It is in `.mcp.json`, so Claude Code offers it when you open a project: approve it, log on in SAP Logon, and ask:
+### Set it up in a new project
+
+There is nothing separate to install. `.\setup.ps1` installs what the server needs, and `.mcp.json` tells Claude Code how to start it.
+
+**1. Run `.\setup.ps1`,** as in [Start a new project](#start-a-new-project).
+
+**2. Log on** to the system in SAP Logon. The server never logs on: it uses your logon, in a window of its own.
+
+**3. Open Claude Code in the project folder,** and approve `sap-gui` when it asks. It has to be that folder, because `.mcp.json` uses paths relative to it.
+
+**4. Check that it connects:**
+
+```powershell
+claude mcp get sap-gui
+```
+
+You should see `Status: ✓ Connected`.
+
+**5. Ask Claude:**
 
 > Look at what ME2N shows for PO 4500000001 and write a test that reads the open quantities
+
+| If | Do this |
+|---|---|
+| It says `Failed to connect` | Run `.\setup.ps1`: `.venv` or `resources\sap_system.resource` is missing |
+| You rejected it by mistake | Run `claude mcp reset-project-choices` in the project folder, then reopen Claude Code |
+| Claude says there is no SAP logon | Log on in SAP Logon, on the system and client in `resources\sap_system.resource` |
+
+### Add it to a project you already have
+
+Projects don't update themselves, including those made from an earlier version of this template. Get the latest starter, add its new files, then run setup to install the MCP SDK. Setup keeps your existing settings.
+
+```powershell
+git clone https://github.com/weiserman/robosapiens-starter.git
+.\robosapiens-starter\add-to-project.ps1 -Path C:\Projects\my-sap-project
+cd C:\Projects\my-sap-project
+.\setup.ps1
+```
+
+If the project already has a `.mcp.json`, `add-to-project.ps1` leaves it alone, so add the `sap-gui` entry from this repo's `.mcp.json` to it yourself. Then continue from step 2 above.
+
+### Use it from another MCP client
+
+Other clients need full paths. Add this to the client's MCP settings, with your project's folder:
+
+```json
+{
+  "mcpServers": {
+    "sap-gui": {
+      "command": "C:\\Projects\\my-sap-project\\.venv\\Scripts\\python.exe",
+      "args": ["C:\\Projects\\my-sap-project\\tools\\sap_mcp_server.py"]
+    }
+  }
+}
+```
+
+The server starts this way from any folder, but only Claude Code has been tried as the client.
+
+### What it can do
 
 | Tool | What it does |
 |---|---|
@@ -178,6 +236,8 @@ It is in `.mcp.json`, so Claude Code offers it when you open a project: approve 
 | `recorded_test` | Returns the steps so far as a Robot Framework test |
 
 Run a recorded test before you rely on it. It reads whole tables where Claude may have read a few rows, so a step after a read can behave differently.
+
+### What it is allowed to do
 
 **It is read-only unless you change that:**
 
