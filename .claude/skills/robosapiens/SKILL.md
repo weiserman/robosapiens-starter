@@ -34,6 +34,8 @@ This prints the transaction's first screen. For later screens, use the `sap-gui`
 
 The server is read-only unless the user sets `${SAP_MCP_ALLOW_CHANGES}` to True in `resources/sap_system.resource`. If it refuses a step, tell the user what was refused and why. Never change that setting or `resources/sap_mcp_transactions.txt` yourself, and restrict a selection before executing it: an empty ME2N ties up the window for minutes.
 
+When the user would rather show a flow than describe it, point them to the README's "Record steps by hand". The RoboSAPiens recorder only records the user's first SAP window, and everything done while recording really happens. Never run a recording as it is: its `Test Teardown    Close SAP` kills SAP Logon and `Connect to running SAP` takes over that window. Convert it first: replace its settings with `Resource    ../resources/sap_gui.resource`, replace `Connect to running SAP` with the `Open SAP Window`, `TRY` and `FINALLY` shape in step 3, and keep the steps. It records only what the user touched, so also set or clear fields that a screen remembers, add checks, and replace test data with variables.
+
 If this project's SAP system is connected through an ADT or MCP tool, reading the transaction's report and selection texts helps too, but the live screen wins.
 
 ## 3. Write the steps

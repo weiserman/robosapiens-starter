@@ -14,6 +14,7 @@ RoboSAPiens provides those keywords. This starter adds what you need around them
 - **A window of the test's own.** Tests reuse your SAP logon in an extra window, and close only that window. RoboSAPiens alone would take over the window you are working in.
 - **`.\inspect.ps1 ME2N`** prints the labels, fields, buttons and columns of a screen, so you don't have to guess locators.
 - **`Get Table Rows`** reads a whole list into dictionaries.
+- **[Instructions for the recorder](#record-steps-by-hand)**, so you can click through a flow and turn it into a safe test.
 - **One-command setup**, dated result folders and working examples.
 - **A Claude Code skill** that lets Claude write tests the same way, including the mistakes to avoid.
 - **A read-only [MCP server](#mcp-server-let-claude-work-through-sap-live)** that lets Claude work through SAP screens live, then turn the steps into a test.
@@ -131,6 +132,8 @@ If the list comes back shorter than expected, a remembered value is probably fil
 ```
 
 As you add more, move each transaction's steps into a keyword in its own file, such as `resources\me2n.resource`, so tests stay short and a changed screen means changing one file.
+
+Prefer to click through a flow yourself? [Record it by hand](#record-steps-by-hand) and turn the recording into a test.
 
 ## Rules worth knowing
 
@@ -250,6 +253,130 @@ This guards against mistakes, but it is not a security boundary: a display trans
 To let Claude save and post on a test system, set `${SAP_MCP_ALLOW_CHANGES}` to `True` in `resources\sap_system.resource` and restart the server. All transactions then start, the refusals stop, and a `fill_cell` tool appears. Never do this on a production system.
 
 The server closes its window when it stops. If it is stopped abruptly, close the leftover window by hand.
+
+## Record steps by hand
+
+RoboSAPiens includes a recorder: you work in SAP as usual, and it writes the steps as a test. Use it when it's quicker to show a flow than to describe it, especially for people who don't write tests.
+
+| To | Use |
+|---|---|
+| See a transaction's first screen | `.\inspect.ps1 ME2N` |
+| Have Claude explore screens, read-only | [The MCP server](#mcp-server-let-claude-work-through-sap-live) |
+| Show a flow yourself, with your own clicks | The recorder |
+
+**Read this first:**
+
+- **Everything you do really happens.** The recorder only watches, so nothing makes it read-only: Save saves and Post posts. Record on a test system.
+- **It only records your first SAP window,** the first window of your first logon, even if you're working in another one.
+- **Don't run a recording as it is.** It starts SAP Logon, takes over your first window, and ends with `Close SAP`, which closes SAP Logon and every window in it. Convert it first, as shown below.
+- **Keep a selection restricted.** A list with nothing filled in, such as an empty ME2N, can tie up a window for minutes and end in a short dump.
+- **Keep recordings out of git.** The HTML report has screenshots of your screens. `results\` is ignored, so record there.
+
+### Make a recording
+
+**1. Log on** in SAP Logon. If you have several windows open, do the steps in the first one you opened.
+
+**2. Start the recorder** from the project folder. For 32-bit SAP GUI, use `robosapiens.exe` instead.
+
+```powershell
+New-Item -ItemType Directory -Force results\recordings
+cd results\recordings
+..\..\.venv\Scripts\robosapiens-x64.exe --record
+```
+
+**3. Name the test.** Type `new`, a test name such as `PO Open Lines`, and the language `en`. This is also the only time it asks for them.
+
+**4. Type `start`,** and wait for `Connected to the current session.`
+
+**5. Work in SAP.** Type transactions, fill fields and press keys as you normally would. To check a result, type a keyword in the recorder window, with at least two spaces between the parts:
+
+```text
+${title}   Get Window Title
+```
+
+**6. Type `stop`, `save`, then `exit`.** `stop` and `start` also pause and resume a recording, and `save` only works while stopped.
+
+You'll find two files in `results\recordings`: `PO_Open_Lines.robot`, and `PO_Open_Lines.html`, which shows each step with a screenshot.
+
+| Command | What it does | When |
+|---|---|---|
+| `new` | Asks for the test name and language | First |
+| `start` | Starts or resumes recording | After `new` |
+| `stop` | Stops recording | While recording |
+| `save` | Writes the files to the current folder | After `stop` |
+| `${result}   Keyword   argument` | Adds a keyword call to the recording | While recording |
+| `help` | Lists the commands available right now | Any time |
+| `exit` | Closes the recorder, without saving | Any time |
+
+### Turn it into a test
+
+A recording looks like this:
+
+```robot
+*** Settings ***
+Library    RoboSAPiens    x64=True
+Test Setup    Open SAP    C:\\Program Files\\SAP\\FrontEnd\\SAPGUI\\saplogon.exe
+Test Teardown    Close SAP
+
+
+*** Test Cases ***
+PO Open Lines
+    Connect to running SAP
+    # Window: SAP Easy Access
+    Execute Transaction    /nme2n    with_command_field=True
+    # Window: Purchasing Documents per Document Number
+    Fill Text Field    Purchasing Document Number    4500000001
+    Push Button    Execute (F8)    exact=True
+    # Window: Purchasing Documents by Document Number
+    Double-click Cell    4500000001    Pur. Doc.
+    # Window: Standard PO 4500000001
+    Push Button    Back    exact=True
+    # Window: Purchasing Documents by Document Number
+    Push Button    Back    exact=True
+    ${title}    Get Window Title
+```
+
+Save a copy in `tests\`, replace the `*** Settings ***` section, and put the steps between `Open SAP Window` and `Close SAP GUI Session`. Those replace `Connect to running SAP`, `Open SAP` and `Close SAP`:
+
+```robot
+*** Settings ***
+Resource          ../resources/sap_gui.resource
+Test Tags         read-only
+
+*** Test Cases ***
+PO Open Lines
+    Open SAP Window
+    TRY
+        Execute Transaction    /nme2n    with_command_field=True
+        Fill Text Field    Purchasing Document Number    4500000001
+        Push Button    Execute (F8)    exact=True
+        Double-click Cell    4500000001    Pur. Doc.
+        Push Button    Back    exact=True
+        Push Button    Back    exact=True
+        ${title}    Get Window Title
+    FINALLY
+        Close SAP GUI Session
+    END
+```
+
+Then tidy it up:
+
+- **Add what you didn't change.** The recorder only records what you touched. If a screen remembered a value such as the site, the test depends on it, so set it or clear it with `Fill Text Field    <label>    ${EMPTY}`.
+- **Add checks.** A recording only repeats steps: it doesn't check a result until you add something like `Should Be Equal`.
+- **Replace test data,** such as the PO number, with variables.
+- **Tag anything that saves or posts,** for example `posts-goods-movement`, and don't use `read-only`.
+
+Run it with `.\run_tests.ps1 tests\po_open_lines.robot`. You can also ask Claude: "Turn `results\recordings\PO_Open_Lines.robot` into a test".
+
+### Record reusable keywords
+
+To group steps into named keywords, start the recorder with `--record-keywords`:
+
+```powershell
+..\..\.venv\Scripts\robosapiens-x64.exe --record-keywords
+```
+
+Each `start` and `stop` then records one keyword, and `stop` asks for its name, unless nothing happened. `save` writes the `.robot` file with no HTML report. Convert it in the same way. So far this mode has only been tried without any clicks in SAP, while the plain `--record` steps above come from a real recording.
 
 ## Running without a logged-on user
 

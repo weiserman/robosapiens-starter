@@ -19,5 +19,8 @@
 | `Refused: ... is not in resources/sap_mcp_transactions.txt` | The MCP server is read-only and the transaction is not listed | If it only displays data, the user adds it to the file. No restart needed |
 | `Refused: ... this server is read-only` | The step would save or post | The user decides: `${SAP_MCP_ALLOW_CHANGES}` in `resources/sap_system.resource`, then a restart of the server |
 | `SAP is still busy after 120 seconds` | A selection without restrictions, usually | Wait for the list to finish, then restrict the selection next time |
+| Recorder: `Invalid command.` after `start` or `save` | No test case yet | Type `new` first. `help` lists what is available at that point |
+| Recorder: `No active session found. Connect to a server and try again.` | Not logged on | Log on in SAP Logon, then `start` again |
+| Recorder: a recording has none of your steps | The steps were done in a window other than the first | Redo them in the first SAP window you opened |
 | The `sap-gui` server does not connect | `.venv` or `resources/sap_system.resource` is missing | Run `.\setup.ps1`, and approve the server when Claude Code asks |
 | An extra SAP window stays open after a session | The server was stopped before it could close it | Close that window by hand |
