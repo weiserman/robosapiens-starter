@@ -119,6 +119,8 @@ Purchase Order Has Open Lines
 
 `Describe Screen` writes the list's real column titles to the log. Remove it once the test works. The `TRY`/`FINALLY` closes the window even if a step fails.
 
+If the list comes back shorter than expected, a remembered value is probably filtering it: selection screens can pre-fill fields such as the plant. Check what `.\inspect.ps1 ME2N` shows and clear those fields with `Fill Text Field    <label>    ${EMPTY}`.
+
 **3. Run it:**
 
 ```powershell
